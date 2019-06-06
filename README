@@ -1,0 +1,17 @@
+Flower Watering with GL Embedded Starter Kit
+
+This is a simple implementation of flower watering
+device with climate control and hazardous gases
+detector, connected to the Internet and accessible
+through Mozilla IOT gateway on RaspberryPi.
+
+The Flower Waterer is developed for GL Embedded Starter Kit
+and demonstrates ideas that can be realized by students
+during education process
+
+This project can be imported to System Workbench for STM32 IDE,
+built and flashed to GL Embedded Starter Kit board
+
+Authours:
+        Ruslan Bilovol <ruslan.bilovol@globallogic.com>
+        Volodymyr Petrovskyy
