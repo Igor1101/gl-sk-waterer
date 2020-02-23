@@ -658,7 +658,7 @@ void StartDefaultTask(void const * argument)
 //	osDelay(1000);
 
 	LcdInit();
-	LcdShowMessage("GL Starter Kit");
+	LcdShowMessage("WirelessFirmware");
 	osDelay(3000);
 
   /* Infinite loop */
