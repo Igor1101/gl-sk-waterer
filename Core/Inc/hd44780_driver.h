@@ -219,5 +219,5 @@ typedef enum {
 void LcdInit(void);
 void LcdShowMessage(const char *msg);
 void LcdShow4Lines(const char *l1, const char *l2, const char *l3, const char *l4);
-
+void LcdShow2Lines(const char* l1, const char*l2);
 #endif /* __HD44780_DRIVER_H */

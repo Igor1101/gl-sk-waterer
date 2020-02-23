@@ -233,23 +233,12 @@ void LcdShow4Lines(const char *l1, const char *l2, const char *l3, const char *l
 	}
 }
 
-//void LcdShowTwoLines(const char *line1, const char *line2) {
-//	Lcd_CmdWrite(0x01);        // Clear Display
-//	Lcd_CmdWrite(0x80); // Move the cursor to beginning of first line
-//	while(*line1) {
-//		Lcd_DataWrite(*line1++);
-//	}
-//
-//	Lcd_CmdWrite(0b11000000); // Move the cursor to beginning of second line
-//	while(*line2) {
-//		Lcd_DataWrite(*line2++);
-//	}
-//}
-
 void LcdShowMessage(const char *msg) {
-//	LcdShowTwoLines(msg, "");
 	LcdShow4Lines(msg, "", "", "");
-//	LcdShow4Lines(msg, "1234", "789", "GAS:4095");
+}
+
+void LcdShow2Lines(const char* l1, const char*l2){
+	LcdShow4Lines(l1, "", l2, "");
 }
 
 

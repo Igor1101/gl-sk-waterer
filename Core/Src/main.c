@@ -694,7 +694,7 @@ void StartDefaultTask(void const * argument)
 //	osDelay(1000);
 
 	LcdInit();
-	LcdShowMessage("WirelessFirmware");
+	LcdShow2Lines("WirelessFirmware", "0.0.0");
 	osDelay(3000);
 
   /* Infinite loop */
