@@ -672,7 +672,7 @@ void SendResponse(const char *resp) {
 //					osMessagePut(myQueueMsgHandle, (uint32_t)"uart", 1);
 //	osDelay(30);
 }
-void debug_puts(UART_HandleTypeDef* huart,char* str) {
+void uputs(UART_HandleTypeDef* huart,char* str) {
 	size_t sz = strlen(str);
 	HAL_UART_Transmit(huart, (uint8_t*)str, sz, 10);
 	HAL_UART_Transmit(huart, (uint8_t*)"\n\r", 2, 10);
@@ -689,18 +689,10 @@ void debug_puts(UART_HandleTypeDef* huart,char* str) {
 void StartDefaultTask(void const * argument)
 {
   /* USER CODE BEGIN 5 */
-//	osDelay(1000);
-//	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, GPIO_PIN_SET);
-//	osDelay(1000);
-//	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, GPIO_PIN_RESET);
-//	osDelay(1000);
-//	HAL_GPIO_WritePin(GPIOD, GPIO_PIN_10, GPIO_PIN_SET);
-//	osDelay(1000);
 	LcdInit();
 	LcdShow2Lines("WirelessFirmware", "0.0.0");
 	osDelay(3000);
-	while(1)
-	debug_puts(&huart2, "WirelessFirmware started");
+	uputs(DEBUG_SERIAL, "WirelessFirmware started");
   /* Infinite loop */
 	for(;;)
 	{
