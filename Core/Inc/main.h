@@ -60,20 +60,6 @@ void SendResponse(const char *resp);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LCD_RS_Pin GPIO_PIN_7
-#define LCD_RS_GPIO_Port GPIOE
-#define LCD_RW_Pin GPIO_PIN_10
-#define LCD_RW_GPIO_Port GPIOE
-#define LCD_E_Pin GPIO_PIN_11
-#define LCD_E_GPIO_Port GPIOE
-#define LCD_D4_Pin GPIO_PIN_12
-#define LCD_D4_GPIO_Port GPIOE
-#define LCD_D5_Pin GPIO_PIN_13
-#define LCD_D5_GPIO_Port GPIOE
-#define LCD_D6_Pin GPIO_PIN_14
-#define LCD_D6_GPIO_Port GPIOE
-#define LCD_D7_Pin GPIO_PIN_15
-#define LCD_D7_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
