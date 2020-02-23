@@ -21,7 +21,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "stm32f4xx_it.h"
-#include "cmsis_os.h"
+#include "FreeRTOS.h"
+#include "task.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <string.h>
@@ -60,12 +61,11 @@
 /* External variables --------------------------------------------------------*/
 extern DMA_HandleTypeDef hdma_usart3_rx;
 extern DMA_HandleTypeDef hdma_usart3_tx;
-extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim6;
 
 /* USER CODE BEGIN EV */
-extern osMessageQId myQueueCmdsHandle;
+//extern osMessageQId myQueueCmdsHandle;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -210,20 +210,6 @@ void EXTI9_5_IRQHandler(void)
 }
 
 /**
-  * @brief This function handles USART1 global interrupt.
-  */
-void USART1_IRQHandler(void)
-{
-  /* USER CODE BEGIN USART1_IRQn 0 */
-
-  /* USER CODE END USART1_IRQn 0 */
-  HAL_UART_IRQHandler(&huart1);
-  /* USER CODE BEGIN USART1_IRQn 1 */
-
-  /* USER CODE END USART1_IRQn 1 */
-}
-
-/**
   * @brief This function handles USART3 global interrupt.
   */
 void USART3_IRQHandler(void)
@@ -248,11 +234,11 @@ void EXTI15_10_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_11);
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
 	if (HAL_GPIO_ReadPin(GPIOC, GPIO_PIN_11) == GPIO_PIN_SET) {
-		osMessagePut(myQueueCmdsHandle, PUMP_OFF, 1);
+		//osMessagePut(myQueueCmdsHandle, PUMP_OFF, 1);
 //		SendResponse("{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":false}}");
 	}
 	else {
-		osMessagePut(myQueueCmdsHandle, PUMP_ON, 1);
+		//osMessagePut(myQueueCmdsHandle, PUMP_ON, 1);
 //		SendResponse("{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":true}}");
 	}
   /* USER CODE END EXTI15_10_IRQn 1 */
