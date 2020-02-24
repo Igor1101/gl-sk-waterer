@@ -55,14 +55,11 @@ I2C_HandleTypeDef hi2c1;
 
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart3;
-DMA_HandleTypeDef hdma_usart3_rx;
-DMA_HandleTypeDef hdma_usart3_tx;
 
 osThreadId defaultTaskHandle;
-osThreadId myTaskLedsHandle;
-osThreadId myTaskCmdsHandle;
-osThreadId myTaskUartHandle;
-osThreadId myTaskAdcHandle;
+osThreadId TaskLedsHandle;
+osThreadId TaskAdcHandle;
+osThreadId TaskAt_debugHandle;
 osMessageQId myQueueCmdsHandle;
 osMessageQId myQueueDozeWaterHandle;
 osMessageQId myQueueMsgHandle;
@@ -81,7 +78,6 @@ struct Status {
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_DMA_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART3_UART_Init(void);
 static void MX_I2C1_Init(void);
@@ -89,13 +85,11 @@ static void MX_ADC2_Init(void);
 static void MX_USART2_UART_Init(void);
 void StartDefaultTask(void const * argument);
 void StartTaskLeds(void const * argument);
-void StartTaskCmds(void const * argument);
-void StartTaskUart(void const * argument);
 void StartTaskAdc(void const * argument);
+void task_at_debug(void const * argument);
 void CallbackPump(void const * argument);
 
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -132,7 +126,6 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
   MX_ADC1_Init();
   MX_USART3_UART_Init();
   MX_I2C1_Init();
@@ -187,21 +180,17 @@ int main(void)
   osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 228);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
-  /* definition and creation of myTaskLeds */
-  osThreadDef(myTaskLeds, StartTaskLeds, osPriorityNormal, 0, 128);
-  myTaskLedsHandle = osThreadCreate(osThread(myTaskLeds), NULL);
+  /* definition and creation of TaskLeds */
+  osThreadDef(TaskLeds, StartTaskLeds, osPriorityNormal, 0, 128);
+  TaskLedsHandle = osThreadCreate(osThread(TaskLeds), NULL);
 
-  /* definition and creation of myTaskCmds */
-  osThreadDef(myTaskCmds, StartTaskCmds, osPriorityNormal, 0, 128);
-  myTaskCmdsHandle = osThreadCreate(osThread(myTaskCmds), NULL);
+  /* definition and creation of TaskAdc */
+  osThreadDef(TaskAdc, StartTaskAdc, osPriorityNormal, 0, 128);
+  TaskAdcHandle = osThreadCreate(osThread(TaskAdc), NULL);
 
-  /* definition and creation of myTaskUart */
-  osThreadDef(myTaskUart, StartTaskUart, osPriorityNormal, 0, 1128);
-  myTaskUartHandle = osThreadCreate(osThread(myTaskUart), NULL);
-
-  /* definition and creation of myTaskAdc */
-  osThreadDef(myTaskAdc, StartTaskAdc, osPriorityNormal, 0, 128);
-  myTaskAdcHandle = osThreadCreate(osThread(myTaskAdc), NULL);
+  /* definition and creation of TaskAt_debug */
+  osThreadDef(TaskAt_debug, task_at_debug, osPriorityBelowNormal, 0, 128);
+  TaskAt_debugHandle = osThreadCreate(osThread(TaskAt_debug), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -412,7 +401,8 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE END USART2_Init 0 */
 
   /* USER CODE BEGIN USART2_Init 1 */
-
+	// recv interrupt force enable
+	USART2->CR1 |= USART_CR1_RXNEIE;
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
   huart2.Init.BaudRate = 115200;
@@ -427,7 +417,6 @@ static void MX_USART2_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART2_Init 2 */
-
   /* USER CODE END USART2_Init 2 */
 
 }
@@ -445,7 +434,8 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE END USART3_Init 0 */
 
   /* USER CODE BEGIN USART3_Init 1 */
-
+	// recv interrupt force enable
+	USART3->CR1 |= USART_CR1_RXNEIE;
   /* USER CODE END USART3_Init 1 */
   huart3.Instance = USART3;
   huart3.Init.BaudRate = 115200;
@@ -462,25 +452,6 @@ static void MX_USART3_UART_Init(void)
   /* USER CODE BEGIN USART3_Init 2 */
 
   /* USER CODE END USART3_Init 2 */
-
-}
-
-/** 
-  * Enable DMA controller clock
-  */
-static void MX_DMA_Init(void) 
-{
-
-  /* DMA controller clock enable */
-  __HAL_RCC_DMA1_CLK_ENABLE();
-
-  /* DMA interrupt init */
-  /* DMA1_Stream1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
-  /* DMA1_Stream3_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream3_IRQn, 5, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream3_IRQn);
 
 }
 
@@ -662,21 +633,14 @@ static void makePacket(const char *data, uint8_t *buf) {
 //	return buf;
 }
 
-static uint8_t buf[512];
-void SendResponse(const char *resp) {
-	int msg_size = strlen(resp) + 4 + 3;
-//	uint8_t buf[msg_size + 1];
-	buf[msg_size] = '\0';
-	makePacket(resp, buf);
-	HAL_UART_Transmit_DMA(&huart3, buf, msg_size);
-//					osMessagePut(myQueueMsgHandle, (uint32_t)"uart", 1);
-//	osDelay(30);
-}
+
 void uputs(UART_HandleTypeDef* huart,char* str) {
 	size_t sz = strlen(str);
 	HAL_UART_Transmit(huart, (uint8_t*)str, sz, 10);
 	HAL_UART_Transmit(huart, (uint8_t*)"\n\r", 2, 10);
 }
+
+size_t ugets(UART_HandleTypeDef*huart, char*str){}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -693,6 +657,7 @@ void StartDefaultTask(void const * argument)
 	LcdShow2Lines("WirelessFirmware", "0.0.0");
 	osDelay(3000);
 	uputs(DEBUG_SERIAL, "WirelessFirmware started");
+	at_available();
   /* Infinite loop */
 	for(;;)
 	{
@@ -746,145 +711,6 @@ void StartTaskLeds(void const * argument)
   /* USER CODE END StartTaskLeds */
 }
 
-/* USER CODE BEGIN Header_StartTaskCmds */
-/**
-* @brief Function implementing the myTaskCmds thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTaskCmds */
-void StartTaskCmds(void const * argument)
-{
-  /* USER CODE BEGIN StartTaskCmds */
-  /* Infinite loop */
-	for(;;)
-	{
-		osDelay(30);
-		osEvent evt = osMessageGet(myQueueCmdsHandle, 1);
-		if (evt.status == osEventMessage) {
-			enum Cmd cmd = (enum Cmd)evt.value.p;
-			switch (cmd){
-			case FAN_ON:
-				TurnFanOn();
-				break;
-			case FAN_OFF:
-				TurnFanOff();
-				break;
-			case PUMP_ON:
-				TurnPumpOn();
-				SendResponse("{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":true}}");
-				break;
-			case PUMP_OFF:
-				TurnPumpOff();
-				SendResponse("{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":false}}");
-				break;
-			case DOSE_WATER:
-				DoseWater();
-				break;
-			default:
-				osMessagePut(myQueueMsgHandle, (uint32_t)"Wrong command", 1);
-				break;
-			}
-		}
-	}
-  /* USER CODE END StartTaskCmds */
-}
-
-/* USER CODE BEGIN Header_StartTaskUart */
-/**
-* @brief Function implementing the myTaskUart thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_StartTaskUart */
-void StartTaskUart(void const * argument)
-{
-  /* USER CODE BEGIN StartTaskUart */
-	RingBuffer_DMA rba;
-	uint8_t dma_buffer[512];
-	RingBuffer_DMA_Init(&rba, huart3.hdmarx, dma_buffer, sizeof(dma_buffer));
-	HAL_UART_Receive_DMA(&huart3, dma_buffer, sizeof(dma_buffer));
-  /* Infinite loop */
-  for(;;)
-	{
-		osDelay(2);
-//		uint8_t cmd = 0;
-//		HAL_StatusTypeDef res = HAL_UART_Receive(&huart3, &cmd, 1, 10);
-//		if (res == HAL_OK) {
-//			osMessagePut(myQueueCmdsHandle, cmd, 1);
-//		}
-		int avail = RingBuffer_DMA_Count(&rba);
-		if (avail) {
-			uint8_t b = RingBuffer_DMA_GetByte(&rba);
-			if (b == SOH) {
-				avail = RingBuffer_DMA_Count(&rba);
-				while (avail < 3) {
-					osDelay(2);
-					avail = RingBuffer_DMA_Count(&rba);
-				}
-				uint8_t bs[3];
-				for(int i = 0; i < 3; ++i)
-					bs[i] = RingBuffer_DMA_GetByte(&rba);
-
-				uint32_t len = 0;
-				len = bs[0] + bs[1]*256;
-
-				avail = RingBuffer_DMA_Count(&rba);
-				while (avail < len + 3 - 1) {
-					osDelay(2);
-					avail = RingBuffer_DMA_Count(&rba);
-				}
-
-				uint8_t json[len +1];
-				json[len] = 0;
-				for(int i = 0; i < len; ++i)
-					json[i] = RingBuffer_DMA_GetByte(&rba);
-
-				if (strcmp((char *)json, "{\"messageType\":\"getAdapter\",\"data\":{}}") == 0) {
-					const char *resp = "{\"messageType\":\"adapter\",\"data\":{\"id\":\"GL-StarterKit\",\"name\":\"GL-StarterKit\",\"thingCount\":1}}";
-					SendResponse(resp);
-					osMessagePut(myQueueMsgHandle, (uint32_t)"getAdatper", 1);
-				}
-				if (strcmp((char *)json, "{\"messageType\":\"getThingByIdx\",\"data\":{\"thingIdx\":0}}") == 0) {
-					const char *resp = "{\"messageType\":\"thing\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"pump\",\"type\":\"onOffSwitch\",\"description\":\"GL-StarterKit Water Pump\",\"propertyCount\":1}}";
-					SendResponse(resp);
-					osMessagePut(myQueueMsgHandle, (uint32_t)"things", 1);
-				}
-				if (strcmp((char *)json, "{\"messageType\":\"getPropertyByIdx\",\"data\":{\"thingIdx\":0,\"propertyIdx\":0}}") == 0) {
-					const char *resp = "{\"messageType\":\"property\",\"data\":{\"name\":\"on\",\"type\":\"boolean\",\"value\":false}}";
-					SendResponse(resp);
-					osMessagePut(myQueueMsgHandle, (uint32_t)"property", 1);
-				}
-				if (strcmp((char *)json, "{\"messageType\":\"setProperty\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":\"true\"}}") == 0) {
-					const char *resp = "{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":true}}";
-					SendResponse(resp);
-					osMessagePut(myQueueMsgHandle, (uint32_t)"setProp", 1);
-				}
-				if (strcmp((char *)json, "{\"messageType\":\"setProperty\",\"data\":{\"name\":\"on\",\"value\":true,\"id\":\"GL-StarterKit-pump-1\"}}") == 0) {
-					const char *resp = "{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":true}}";
-					SendResponse(resp);
-					DoseWater();
-				}
-				if (strcmp((char *)json, "{\"messageType\":\"setProperty\",\"data\":{\"name\":\"on\",\"value\":false,\"id\":\"GL-StarterKit-pump-1\"}}") == 0) {
-					const char *resp = "{\"messageType\":\"propertyChanged\",\"data\":{\"id\":\"GL-StarterKit-pump-1\",\"name\":\"on\",\"value\":false}}";
-					SendResponse(resp);
-					osMessagePut(myQueueCmdsHandle, PUMP_OFF, 1);
-				}
-//				if (strcmp((char *)json, "") == 0) {
-//					const char *resp = "";
-//					SendResponse(resp);
-//				}
-
-			}
-
-		}
-
-		continue;
-
-	}
-  /* USER CODE END StartTaskUart */
-}
-
 /* USER CODE BEGIN Header_StartTaskAdc */
 /**
 * @brief Function implementing the myTaskAdc thread.
@@ -934,6 +760,30 @@ void StartTaskAdc(void const * argument)
 		osMessagePut(myQueueMsgHandle, (uint32_t)buf, 1);
 	}
   /* USER CODE END StartTaskAdc */
+}
+
+/* USER CODE BEGIN Header_task_at_debug */
+/**
+* @brief Function implementing the TaskAt_debug thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_task_at_debug */
+void task_at_debug(void const * argument)
+{
+  /* USER CODE BEGIN task_at_debug */
+  /* Infinite loop */
+	uputs(DEBUG_SERIAL, "task at debug started");
+  for(;;)
+  {
+	  /* output input from esp */
+	  uint8_t r;
+		if(HAL_OK == HAL_UART_Receive(AT_SERIAL, &r, 1, 100)) {
+			HAL_UART_Transmit(DEBUG_SERIAL, &r,1,0);
+		}
+
+  }
+  /* USER CODE END task_at_debug */
 }
 
 /* CallbackPump function */

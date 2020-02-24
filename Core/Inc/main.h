@@ -79,7 +79,10 @@ void SendResponse(const char *resp);
 #define USART3_RX_PIN_Pin GPIO_PIN_9
 #define USART3_RX_PIN_GPIO_Port GPIOD
 /* USER CODE BEGIN Private defines */
+extern UART_HandleTypeDef huart2;
+extern UART_HandleTypeDef huart3;
 #define DEBUG_SERIAL &huart2
+#define AT_SERIAL &huart3
 void uputs(UART_HandleTypeDef* huart,char* str);
 /* USER CODE END Private defines */
 
