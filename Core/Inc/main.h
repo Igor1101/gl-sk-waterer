@@ -29,7 +29,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-
+#include "at_esp.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -82,7 +82,7 @@ void SendResponse(const char *resp);
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 #define DEBUG_SERIAL &huart2
-#define AT_SERIAL &huart3
+#define debug(X) uputs(DEBUG_SERIAL, X)
 void uputs(UART_HandleTypeDef* huart,char* str);
 /* USER CODE END Private defines */
 

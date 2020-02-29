@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include <string.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include "hd44780_driver.h"
 #include "pca9685.h"
 #include "jsmn.h"
@@ -450,7 +451,7 @@ static void MX_USART3_UART_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN USART3_Init 2 */
-
+  USART3->CR1 |= USART_CR1_RXNEIE;
   /* USER CODE END USART3_Init 2 */
 
 }
@@ -637,10 +638,9 @@ static void makePacket(const char *data, uint8_t *buf) {
 void uputs(UART_HandleTypeDef* huart,char* str) {
 	size_t sz = strlen(str);
 	HAL_UART_Transmit(huart, (uint8_t*)str, sz, 10);
-	HAL_UART_Transmit(huart, (uint8_t*)"\n\r", 2, 10);
+	HAL_UART_Transmit(huart, (uint8_t*)"\r\n", 2, 10);
 }
 
-size_t ugets(UART_HandleTypeDef*huart, char*str){}
 /* USER CODE END 4 */
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -655,14 +655,14 @@ void StartDefaultTask(void const * argument)
   /* USER CODE BEGIN 5 */
 	LcdInit();
 	LcdShow2Lines("WirelessFirmware", "0.0.0");
-	osDelay(3000);
-	uputs(DEBUG_SERIAL, "WirelessFirmware started");
-	at_available();
+	osDelay(500);
+	debug("WirelessFirmware started");
+	at_init();
   /* Infinite loop */
 	for(;;)
 	{
 		osDelay(100);
-		osEvent evt = osMessageGet(myQueueMsgHandle, osWaitForever);
+		/*osEvent evt = osMessageGet(myQueueMsgHandle, osWaitForever);
 		if (evt.status == osEventMessage) {
 //			const char *msg = (const char *)evt.value.p;
 //			LcdShowMessage(msg);
@@ -676,7 +676,7 @@ void StartDefaultTask(void const * argument)
 			sprintf(l4, "Gas:%4ld", curStatus.gas);
 			LcdShow4Lines(l1, l2, l3, l4);
 			osDelay(100);
-		}
+		}*/
 	}
   /* USER CODE END 5 */ 
 }
@@ -773,15 +773,16 @@ void task_at_debug(void const * argument)
 {
   /* USER CODE BEGIN task_at_debug */
   /* Infinite loop */
-	uputs(DEBUG_SERIAL, "task at debug started");
+	debug("task at debug started");
   for(;;)
   {
 	  /* output input from esp */
+/*
 	  uint8_t r;
 		if(HAL_OK == HAL_UART_Receive(AT_SERIAL, &r, 1, 100)) {
 			HAL_UART_Transmit(DEBUG_SERIAL, &r,1,0);
 		}
-
+*/
   }
   /* USER CODE END task_at_debug */
 }
