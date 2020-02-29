@@ -6,7 +6,7 @@
     <WorkspacePath>/home/igor/STM32CubeIDE/workspace_1.2.0/gl-sk-wireless-esp/</WorkspacePath>
     <underRoot>true</underRoot>
     <TrustZone>0</TrustZone>
-    <HAL_Driver>/home/igor/STM32Cube/Repository//STM32Cube_FW_F4_V1.24.2</HAL_Driver>
+    <HAL_Driver>/home/igor/STM32Cube/Repository//STM32Cube_FW_F4_V1.25.0</HAL_Driver>
     <CMSIS>Drivers/CMSIS</CMSIS>
     <Toolchain>STM32CubeIDE</Toolchain>
     <IocFile>gl-sk-wireless-esp.ioc</IocFile>
@@ -31,7 +31,7 @@
             <memory access="xrw" name="CCMRAM" size="64" start="0x10000000"/>
             <memory access="rx" name="FLASH" size="1024" start="0x8000000"/>
           </memories>
-          <startup>/home/igor/STM32Cube/Repository//STM32Cube_FW_F4_V1.24.2/Drivers/CMSIS/Device\ST\STM32F4xx\Source\Templates\gcc\startup_stm32f407xx.s</startup>
+          <startup>/home/igor/STM32Cube/Repository//STM32Cube_FW_F4_V1.25.0/Drivers/CMSIS/Device\ST\STM32F4xx\Source\Templates\gcc\startup_stm32f407xx.s</startup>
           <LinkSettings>
             <LinkAdditionalLibs/>
           </LinkSettings>
